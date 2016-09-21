@@ -47,7 +47,7 @@ def build_network(inputs):
 		# h mipws : tf.random_uniform(shape, minval=0, maxval=None, dtype=tf.float32, seed=None, name=None)   
 		# no bias
 		l_conv = tf.nn.conv2d(ninputs, kernel2, [1, 1, 1, 1], padding='SAME')
-		l_conv = tf.nn.relu(l_conv)
+		l_conv = tf.nn.relu(l_conv,name=scope)
 
 	# pool2
 	l_pool = tf.nn.max_pool(l_conv,ksize=[1 , 1, 1, num_filters / 2],strides=[1, 1, 1, num_filters / 2],padding='SAME',name='pool2')
