@@ -15,7 +15,7 @@ import tensorflow as tf
 import numpy as np
 import pdb
 #(16, 50, 150, 640)
-def build_network(inputs):
+def model(inputs):
 	#inputs = tf.placeholder(tf.float32, [num_batch, seq_length, num_features])
 
 	#input layer size: (None,seq_length, num_features)
