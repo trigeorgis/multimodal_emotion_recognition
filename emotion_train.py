@@ -1,12 +1,14 @@
 import tensorflow as tf
 import numpy as np
 import emotion_model
-import losses
+#import losses
 import data_provider
-import utils
+#import utils
+import pdb
 
 from tensorflow.python.platform import tf_logging as logging
 from pathlib import Path
+
 
 slim = tf.contrib.slim
 
@@ -41,15 +43,15 @@ def train():
     g = tf.Graph()
     with g.as_default():
         # Load dataset.
-        frames, audio, ground_truth = data_provider.get_data()
+        frames, ground_truth, audio = data_provider.get_data()
 
         # Define model graph.
         with tf.variable_scope('net'):
             with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
                                 is_training=True):
-                prediction = model.audio_model(audio)
-
-        slim.losses.sum_squares_loss(prediction, ground_truth)
+                prediction = emotion_model.build_network(audio)
+                pdb.set_trace()
+                slim.losses.mean_squared_error(prediction, ground_truth)
         total_loss = slim.losses.get_total_loss()
 
         tf.scalar_summary('losses/total loss', total_loss)
@@ -76,4 +78,6 @@ def train():
 
 if __name__ == '__main__':
     train()
+
+
 
