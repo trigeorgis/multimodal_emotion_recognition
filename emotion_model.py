@@ -15,8 +15,9 @@ import tensorflow as tf
 import numpy as np
 import pdb
 #(16, 50, 150, 640)
-def model(inputs):
-	#inputs = tf.placeholder(tf.float32, [num_batch, seq_length, num_features])
+
+def build_network(inputs):
+	inputs = tf.placeholder(tf.float32, [num_batch, seq_length, num_features])
 
 	#input layer size: (None,seq_length, num_features)
 	dropout = tf.nn.dropout(inputs,0.5)
@@ -47,13 +48,13 @@ def model(inputs):
 		# h mipws : tf.random_uniform(shape, minval=0, maxval=None, dtype=tf.float32, seed=None, name=None)   
 		# no bias
 		l_conv = tf.nn.conv2d(ninputs, kernel2, [1, 1, 1, 1], padding='SAME')
-		l_conv = tf.nn.relu(l_conv,name=scope)
+		l_conv = tf.nn.relu(l_conv)
 
 	# pool2
 	l_pool = tf.nn.max_pool(l_conv,ksize=[1 , 1, 1, num_filters / 2],strides=[1, 1, 1, num_filters / 2],padding='SAME',name='pool2')
 
 	l_pool = tf.transpose(l_pool,[0,1,3,2])
-	l_pool = tf.reshape(l_pool,[num_batch, -1,num_features*seq_length/2])
+	l_pool = tf.reshape(l_pool,[num_batch, -1,int(num_features*seq_length/2)])
 
 	# Current data input shape: (batch_size, seq_length, num_features)
 	l_reshape = tf.reshape(l_pool,[ -1,seq_length,num_features])
@@ -79,8 +80,9 @@ def model(inputs):
 		#no bias
 		fcl = tf.matmul(dropout, fcw)
 
-	l_out = tf.reshape(fcl,[-1,seq_length,2])    
-
+	l_out = tf.reshape(fcl,[-1,seq_length,2]) 
+	pdb.set_trace()   
+	return l_out
 
 
 
