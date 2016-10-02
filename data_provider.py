@@ -44,16 +44,16 @@ def get_split(split_name, dataset_dir, file_pattern='%s/*.tfrecords'):
   keys_to_features = {
       #'frame': tf.FixedLenFeature((), tf.string, default_value=''),
       'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value='jpg'),
-      'raw_audio': tf.FixedLenFeature([150,640], tf.float32, default_value=tf.zeros([150,640], dtype=tf.float32)),
-      'label': tf.FixedLenFeature(
-          [2], tf.float32, default_value=tf.zeros([2], dtype=tf.float32)),
+      'image/format': tf.FixedLenFeature((), tf.string),
+      'raw_audio': tf.FixedLenFeature((), tf.string),# h: tf.FixedLenFeature([150,640] h tf.FixedLenFeature([150] h tf.FixedLenFeature([640] h allo  , default_value=tf.zeros([150,640], dtype=tf.float32)),
+      'label': tf.FixedLenFeature((), tf.string)
+          #[40,150,2], tf.float32, default_value=tf.zeros([40,150,2], dtype=tf.float32)),
   }
 
   items_to_handlers = {
-      'image': slim.tfexample_decoder.Image(shape=[28, 28], channels=1),
+      'image': slim.tfexample_decoder.Image(shape=(1280,720), channels=3),
       'audio': slim.tfexample_decoder.Tensor('raw_audio'),
-      'label': slim.tfexample_decoder.Tensor('label'),
+      'label': slim.tfexample_decoder.Tensor('label')
   }
 
   decoder = slim.tfexample_decoder.TFExampleDecoder(
@@ -86,8 +86,17 @@ def get_data(portion='train', batch_size=32):
     dataset = get_split('train','/vol/atlas/homes/gt108/db/RECOLA_CNN/tf_records/' )
     data_provider = slim.dataset_data_provider.DatasetDataProvider(dataset,shuffle=True)
     [image, label, audio] = data_provider.get(['image', 'label','audio'])
-    images,labels,audios = tf.train.batch([image, label, audio], batch_size, num_threads=1, capacity=batch_size*16)
     pdb.set_trace()
+    audio = tf.decode_raw(audio,tf.float32)
+    audio.set_shape([640]) # h audio.set_shape([150,640]) h audio.set_shape([640]) h allo
+    label = tf.decode_raw(label,tf.float32)
+    #label = tf.transpose(label,[2,0,1])
+    label.set_shape([2])
+    #image = tf.to_float(image)
+    #label = tf.to_float(label)
+    #audio = tf.to_float(audio)
+    images,labels,audios = tf.train.batch([image, label, audio], batch_size, num_threads=1, capacity=batch_size*16)
+    #labels = tf.placeholder(tf.float32, [batch_size, 40,150,2])
 
     return images,labels,audios
 
@@ -98,15 +107,3 @@ def main(_):
 
 if __name__ == '__main__':
     tf.app.run()
-
-'''
-def get_data(portion='train', batch_size=32):
-    root = '/vol/atlas/homes/gt108/db/RECOLA_CNN/wav_data/{}*.wav'.format(portion)
-    filename = tf.matching_files(root)
-    contents = tf.read_file(filename)
-    sampled_audio = tf.audio.decode_audio(
-            contents, file_format='wav', samples_per_second=16000, channel_count=1)
-
-
-    tf.train.batch(tensors, batch_size, num_threads=1, capacity=batch_size*16)
-'''
