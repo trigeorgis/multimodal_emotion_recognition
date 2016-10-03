@@ -56,6 +56,9 @@ def train():
             loss = losses.concordance_cc(pred_single, gt_single)
             tf.scalar_summary('losses/{} loss'.format(name), loss)
 
+            mse = tf.reduce_mean(tf.square(pred_single - gt_single))
+            tf.scalar_summary('losses/rmse {} loss'.format(name), mse)
+
             slim.losses.add_loss(loss / 2.)
             
         total_loss = slim.losses.get_total_loss()
