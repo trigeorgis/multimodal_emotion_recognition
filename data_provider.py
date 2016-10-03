@@ -5,73 +5,60 @@ from __future__ import print_function
 import os
 import tensorflow as tf
 
-from datasets import dataset_utils
-
+from pathlib import Path
 slim = tf.contrib.slim
 
-_ITEMS_TO_DESCRIPTIONS = {
-    'image': 'A [28 x 28 x 1] grayscale image.',
-    'label': 'A single integer between 0 and 9',
-}
 
+def get_split(split_name, batch_size=16, seq_length=150, debugging=False):
+    """Returns a data split of the RECOLA dataset.
+    
+    Args:
+        split_name: A train/test/valid split name.
+    Returns:
+        The raw audio examples and the corresponding arousal/valence
+        labels.
+    """
+    dataset_dir = Path('/vol/atlas/homes/gt108/db/RECOLA_CNN/tf_records')
+    paths = [str(x) for x in (dataset_dir / split_name).glob('*.tfrecords')]
+    
+    filename_queue = tf.train.string_input_producer(paths, shuffle=True)
+    reader = tf.TFRecordReader()
+    _, serialized_example = reader.read(filename_queue)
+    features = tf.parse_single_example(
+        serialized_example,
+        # Defaults are not specified since both keys are required.
+        features={
+            'raw_audio': tf.FixedLenFeature([], tf.string),
+            'label': tf.FixedLenFeature([], tf.string),
+            'subject_id': tf.FixedLenFeature([], tf.int64)
+        }
+    )
 
-def get_split(split_name, dataset_dir, file_pattern='%s/*.tfrecords'):
-  """Gets a dataset tuple with instructions for reading MNIST.
-  Args:
-    split_name: A train/test split name.
-    dataset_dir: The base directory of the dataset sources.
-    file_pattern: The file pattern to use when matching the dataset sources.
-      It is assumed that the pattern contains a '%s' string so that the split
-      name can be inserted.
-    reader: The TensorFlow reader type.
-  Returns:
-    A `Dataset` namedtuple.
-  Raises:
-    ValueError: if `split_name` is not a valid train/test split.
-  """
-  if split_name not in 'train:
-    raise ValueError('split name %s was not recognized.' % split_name)
+    raw_audio = tf.decode_raw(features['raw_audio'], tf.float32)
+    label = tf.decode_raw(features['label'], tf.float32)
+    subject_id = features['subject_id']
 
+    raw_audio.set_shape([640])
+    label.set_shape([2])
 
-  file_pattern = os.path.join(dataset_dir, file_pattern % split_name)
+    audio_samples, labels, subject_ids = tf.train.batch(
+        [raw_audio, label, subject_id], seq_length, num_threads=4, capacity=10000)
+    
 
-  reader = tf.TFRecordReader
+    # Assert is an expensive op so we only want to use it when it's a must.
+    if debugging:
+        # Asserts that a sequence contains samples from a single subject.
+        assert_op = tf.Assert(
+            tf.equal(subject_ids[0], subject_ids[10]),
+            [subject_ids])
 
-  keys_to_features = {
-      'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value='raw'),
-      'image/class/label': tf.FixedLenFeature(
-          [1], tf.int64, default_value=tf.zeros([1], dtype=tf.int64)),
-  }
+        with tf.control_dependencies([assert_op]):
+            audio_samples = tf.identity(audio_samples)
 
-  items_to_handlers = {
-      'image': slim.tfexample_decoder.Image(shape=[28, 28, 1], channels=1),
-      'label': slim.tfexample_decoder.Tensor('image/class/label', shape=[]),
-  }
+    audio_samples = tf.expand_dims(audio_samples, 0)
+    labels = tf.expand_dims(labels, 0)
+    
+    audio_samples, labels = tf.train.shuffle_batch(
+        [audio_samples, labels], batch_size, 1000, 100, num_threads=4)
 
-  decoder = slim.tfexample_decoder.TFExampleDecoder(
-      keys_to_features, items_to_handlers)
-
-  labels_to_names = None
-  if dataset_utils.has_labels(dataset_dir):
-    labels_to_names = dataset_utils.read_label_file(dataset_dir)
-
-  return slim.dataset.Dataset(
-      data_sources=file_pattern,
-      reader=reader,
-      decoder=decoder,
-      num_samples=_SPLITS_TO_SIZES[split_name],
-      items_to_descriptions=_ITEMS_TO_DESCRIPTIONS,
-      labels_to_names=labels_to_names)
-
-
-def get_data(portion='train', batch_size=32):
-    root = '/vol/atlas/homes/gt108/db/RECOLA_CNN/wav_data/{}*.wav'.format(portion)
-    filename = tf.matching_files(root)
-    contents = tf.read_file(filename)
-    sampled_audio = tf.audio.decode_audio(
-            contents, file_format='wav', samples_per_second=16000, channel_count=1)
-
-
-    tf.train.batch(tensors, batch_size, num_threads=1, capacity=batch_size*16)
-
+    return audio_samples[:, 0, :, :], labels[:, 0, :, :]
