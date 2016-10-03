@@ -7,6 +7,7 @@ import losses
 from tensorflow.python.platform import tf_logging as logging
 from pathlib import Path
 
+
 slim = tf.contrib.slim
 
 FLAGS = tf.app.flags.FLAGS
@@ -83,4 +84,6 @@ def train():
 
 if __name__ == '__main__':
     train()
+
+
 
