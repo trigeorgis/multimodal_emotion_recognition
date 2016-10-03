@@ -41,8 +41,10 @@ def get_split(split_name, batch_size=16, seq_length=150, debugging=False):
     raw_audio.set_shape([640])
     label.set_shape([2])
 
+    # Number of threads should always be one, in order to load samples
+    # sequentially.
     audio_samples, labels, subject_ids = tf.train.batch(
-        [raw_audio, label, subject_id], seq_length, num_threads=4, capacity=10000)
+        [raw_audio, label, subject_id], seq_length, num_threads=1, capacity=10000)
     
 
     # Assert is an expensive op so we only want to use it when it's a must.
