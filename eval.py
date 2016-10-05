@@ -1,7 +1,7 @@
 #matplotlib inline
 import tensorflow as tf
-import d2
-import m
+import data_provider_valid
+import emotion_model
 import numpy as np
 #import matplotlib
 # Force matplotlib to not use any Xwindows backend.
@@ -19,12 +19,12 @@ def evaluate():
     )
 
     sess = tf.Session(config=nogpu_config)
-    audio, ground_truth = d2.get_split('valid')
+    audio, ground_truth = data_provider_valid.get_split('valid')
 
     with tf.variable_scope('net'):
         with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
                             is_training=False):
-            prediction = m.audio_model(audio)
+            prediction = emotion_model.audio_model(audio)
 
     variables_to_restore = slim.get_variables_to_restore()
     saver = tf.train.Saver(variables_to_restore)
@@ -58,9 +58,6 @@ def evaluate():
     print(concordance_cc(pred[:,0],labels[:,0]))
     print(concordance_cc(pred[:,1],labels[:,1]))
     print((concordance_cc(pred[:,0],labels[:,0])+concordance_cc(pred[:,1],labels[:,1]))/2)
-
-    print()
-    print()
 
     #plt.plot(predictions[0][..., 0].ravel())
     #plt.plot(gts[0][..., 0].ravel())
