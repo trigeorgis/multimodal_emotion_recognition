@@ -9,7 +9,7 @@ from pathlib import Path
 slim = tf.contrib.slim
 
 
-def get_split(split_name, batch_size=16, seq_length=150, debugging=False):
+def get_split(split_name, batch_size, seq_length=150, debugging=False):
     """Returns a data split of the RECOLA dataset.
     
     Args:
@@ -21,7 +21,11 @@ def get_split(split_name, batch_size=16, seq_length=150, debugging=False):
     dataset_dir = Path('/vol/atlas/homes/gt108/db/RECOLA_CNN/tf_records')
     paths = [str(x) for x in (dataset_dir / split_name).glob('*.tfrecords')]
     
-    filename_queue = tf.train.string_input_producer(paths, shuffle=True)
+    if split_name == 'train':
+        filename_queue = tf.train.string_input_producer(paths, shuffle=True)
+    else:
+        filename_queue = tf.train.string_input_producer(paths, shuffle=False)
+
     reader = tf.TFRecordReader()
     _, serialized_example = reader.read(filename_queue)
     features = tf.parse_single_example(
@@ -67,7 +71,11 @@ def get_split(split_name, batch_size=16, seq_length=150, debugging=False):
     labels = tf.expand_dims(labels, 0)
     # frames = tf.expand_dims(frames, 0)
     
-    audio_samples, labels = tf.train.shuffle_batch(
-        [audio_samples, labels], batch_size, 1000, 50, num_threads=4)
+    if split_name == 'train':
+        audio_samples, labels = tf.train.shuffle_batch(
+            [audio_samples, labels], batch_size, 1000, 50, num_threads=1)
+    else:
+        audio_samples, labels = tf.train.batch(
+            [audio_samples, labels], batch_size, num_threads=1, capacity=1000)
 
     return audio_samples[:, 0, :, :], labels[:, 0, :, :]
