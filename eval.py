@@ -3,14 +3,13 @@ import tensorflow as tf
 import d2
 import m
 import numpy as np
-import matplotlib
+#import matplotlib
 # Force matplotlib to not use any Xwindows backend.
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import pdb
+#matplotlib.use('Agg')
+#import matplotlib.pyplot as plt
+#import pdb
 from menpo.visualize import print_progress
 slim = tf.contrib.slim
-from time import sleep
 
 
 def evaluate():
