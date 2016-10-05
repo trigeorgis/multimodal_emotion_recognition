@@ -41,7 +41,7 @@ def train():
     g = tf.Graph()
     with g.as_default():
         # Load dataset.
-        audio, ground_truth = data_provider.get_split('train')
+        audio, ground_truth = data_provider.get_split('train',16)
 
         # Define model graph.
         with tf.variable_scope('net'):
