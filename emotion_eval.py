@@ -1,6 +1,6 @@
 #matplotlib inline
 import tensorflow as tf
-import data_provider_valid
+import data_provider
 import emotion_model
 import numpy as np
 #import matplotlib
@@ -19,7 +19,7 @@ def evaluate():
     )
 
     sess = tf.Session(config=nogpu_config)
-    audio, ground_truth = data_provider_valid.get_split('valid')
+    audio, ground_truth = data_provider.get_split('valid',15)
 
     with tf.variable_scope('net'):
         with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
