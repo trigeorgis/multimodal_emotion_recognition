@@ -13,7 +13,7 @@ nogpu_config = tf.ConfigProto(
 )
 
 sess = tf.Session(config=nogpu_config)
-audio, ground_truth, sids = dd.get_split('valid')
+audio, ground_truth = dd.get_split('valid')
 
 with tf.variable_scope('net'):
     with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
