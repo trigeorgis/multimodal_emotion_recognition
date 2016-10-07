@@ -1,16 +1,10 @@
 #matplotlib inline
 import tensorflow as tf
-import dd
-import m
+import data_provider as dd
+import model_rec_state as m
 import numpy as np
-import matplotlib
-# Force matplotlib to not use any Xwindows backend.
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import pdb
 from menpo.visualize import print_progress
 slim = tf.contrib.slim
-from time import sleep
 
 
 nogpu_config = tf.ConfigProto(
@@ -42,9 +36,9 @@ print(model_path)
 _ = tf.train.start_queue_runners(sess=sess)
 predictions = []
 gts = []
-s=[]
+
 for i in print_progress(range(50)):
-    p, gt, s_ids,sstates = sess.run([prediction, ground_truth,sids,states])
+    p, gt,sstates = sess.run([prediction, ground_truth,states])
     predictions.append(p)
     gts.append(gt)
     s.append(s_ids)
@@ -56,8 +50,6 @@ def concordance_cc(r1, r2):
 
 pr = np.reshape(predictions,[-1,2])
 lb = np.reshape(gts,[-1,2])
-si = np.reshape(s,[-1,2])
-pdb.set_trace()
 mse_a = ((pr[:,0]-lb[:,0])**2).mean() 
 mse_v = ((pr[:,1]-lb[:,1])**2).mean() 
 mse = ((pr-lb)**2).mean() 
