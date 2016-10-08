@@ -8,7 +8,9 @@ import pdb
 from pathlib import Path
 slim = tf.contrib.slim
 
-rest_mul_of_vid = 50 # = 7500/150 , 7500: total number of data per video , 150 = seq_length
+FLAGS = tf.app.flags.FLAGS
+tf.app.flags.DEFINE_integer('rest_mul_of_vid', 50,
+                          '''7500/150 , 7500: total number of data per video , 150 = seq_length''')
 
 
 def get_split(split_name,batch_size=50, seq_length=150, debugging=False):
@@ -68,6 +70,6 @@ def get_split(split_name,batch_size=50, seq_length=150, debugging=False):
     subject_ids = tf.expand_dims(subject_ids, 0)
     
     audio_samples, labels = tf.train.batch(
-        [audio_samples, labels], rest_mul_of_vid,num_threads=1,capacity=10000 )
+        [audio_samples, labels], FLAGS.rest_mul_of_vid,num_threads=1,capacity=10000 )
     pdb.set_trace()
     return audio_samples[:, 0, :, :], labels[:, 0, :, :] , subject_ids[0,:]
