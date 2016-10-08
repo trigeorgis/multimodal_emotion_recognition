@@ -13,3 +13,6 @@ def concordance_cc2(r1, r2):
     mean_cent_prod = ((r1 - r1.mean()) * (r2 - r2.mean())).mean()
 
     return (2 * mean_cent_prod) / (r1.var() + r2.var() + (r1.mean() - r2.mean()) ** 2)
+
+def mse(pr,lab):
+    return (pr-lb)**2).mean() 
