@@ -1,11 +1,20 @@
 #matplotlib inline
 import tensorflow as tf
-import data_provider as dd
-import model_rec_state as m
+import dataset_rec_state
+import model_rec_state 
 import numpy as np
+import losses
 from menpo.visualize import print_progress
 slim = tf.contrib.slim
 
+FLAGS = tf.app.flags.FLAGS
+
+tf.app.flags.DEFINE_string(checkpoint_dir,'/vol/atlas/homes/dk15/full_recola/new/mse(0.0001,4)',
+                          'where is the model checkpoint')
+tf.app.flags.DEFINE_string(portion,'valid',
+                          'what set are we evaluating')
+tf.app.flags.DEFINE_integer(total_portion_vids,15,
+                          'what set are we evaluating')
 
 nogpu_config = tf.ConfigProto(
     # Do not use a GPU device
@@ -13,52 +22,49 @@ nogpu_config = tf.ConfigProto(
 )
 
 sess = tf.Session(config=nogpu_config)
-audio, ground_truth = dd.get_split('valid')
+audio, ground_truth = dataset_rec_state.get_split(FLAGS.portion)
 
 with tf.variable_scope('net'):
     with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
                         is_training=False):
-        prediction,states = m.audio_model(audio)
+        prediction,states = model_rec_state.audio_model(audio)
 # initialse the variable for the states
-init_op = tf.initialize_variables(tf.all_variables(),'net/Variable')
-sess.run(init_op)
+#init_op = tf.initialize_variables(tf.all_variables(),'net/Variable')
+#sess.run(init_op)
 
 variables_to_restore = slim.get_variables_to_restore()
 # since we didnt train with the state variable, we cannot restore it
-variables_to_restore = variables_to_restore[0:4]+variables_to_restore[5:]
+#variables_to_restore = variables_to_restore[0:4]+variables_to_restore[5:]
 
 saver = tf.train.Saver(variables_to_restore)
-model_path = slim.evaluation.tf_saver.get_checkpoint_state('/vol/atlas/homes/dk15/full_recola/new/mse(0.0001,4)').model_checkpoint_path
+model_path = slim.evaluation.tf_saver.get_checkpoint_state(FLAGS.checkpoint_dir).model_checkpoint_path
 saver.restore(sess, model_path)
 
 print(model_path)
 
 _ = tf.train.start_queue_runners(sess=sess)
 predictions = []
-gts = []
+ground_truths = []
 
-for i in print_progress(range(50)):
-    p, gt,sstates = sess.run([prediction, ground_truth,states])
+for i in print_progress(range(FLAGS.total_portion_vids)):
+    p, ground__truth,sstates = sess.run([prediction, ground_truth,states])
     predictions.append(p)
-    gts.append(gt)
+    ground_truths.append(ground__truth)
     s.append(s_ids)
 
-def concordance_cc(r1, r2):
-    mean_cent_prod = ((r1 - r1.mean()) * (r2 - r2.mean())).mean()
 
-    return (2 * mean_cent_prod) / (r1.var() + r2.var() + (r1.mean() - r2.mean()) ** 2)
 
-pr = np.reshape(predictions,[-1,2])
-lb = np.reshape(gts,[-1,2])
-mse_a = ((pr[:,0]-lb[:,0])**2).mean() 
-mse_v = ((pr[:,1]-lb[:,1])**2).mean() 
-mse = ((pr-lb)**2).mean() 
-print(mse_v)
-print(mse_a)
+predictions_flattened = np.reshape(predictions,[-1,2])
+labels_flattened = np.reshape(gts,[-1,2])
+mse_arousal = losses.mse(predictions_flattened[:,0],labels_flattened[:,0])
+mse_valence = losses.mse(predictions_flattened[:,1],labels_flattened[:,1]) 
+mse = losses.mse(predictions_flattened,labels_flattened) 
+print(mse_valence)
+print(mse_arousal)
 print(mse)
-print(concordance_cc(pr[:,0],lb[:,0]))
-print(concordance_cc(pr[:,1],lb[:,1]))
-print((concordance_cc(pr[:,0],lb[:,0])+concordance_cc(pr[:,1],lb[:,1]))/2)
+print(losses.concordance_cc2(predictions_flattened[:,0],labels_flattened[:,0]))
+print(losses.concordance_cc2(predictions_flattened[:,1],labels_flattened[:,1]))
+print((losses.concordance_cc2(predictions_flattened[:,0],labels_flattened[:,0])+losses.concordance_cc2(predictions_flattened[:,1],labels_flattened[:,1]))/2)
 
 print()
 print()
