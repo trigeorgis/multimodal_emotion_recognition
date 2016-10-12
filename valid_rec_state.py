@@ -14,7 +14,7 @@ tf.app.flags.DEFINE_string(checkpoint_dir,'/vol/atlas/homes/dk15/full_recola/new
 tf.app.flags.DEFINE_string(portion,'valid',
                           'what set are we evaluating')
 tf.app.flags.DEFINE_integer(total_portion_vids,15,
-                          'what set are we evaluating')
+                          'how many vids we are evaluating')
 
 nogpu_config = tf.ConfigProto(
     # Do not use a GPU device
@@ -47,10 +47,9 @@ predictions = []
 ground_truths = []
 
 for i in print_progress(range(FLAGS.total_portion_vids)):
-    p, ground__truth,sstates = sess.run([prediction, ground_truth,states])
-    predictions.append(p)
+    pred, ground__truth = sess.run([prediction, ground_truth])
+    predictions.append(pred)
     ground_truths.append(ground__truth)
-    s.append(s_ids)
 
 
 
