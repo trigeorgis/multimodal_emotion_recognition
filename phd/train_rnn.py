@@ -196,19 +196,17 @@ def run_training(scope=''):
       # Build the summary operation from the last tower summaries.
       summary_op = tf.merge_summary(summaries)
 
-
+      summary_writer = tf.train.SummaryWriter(s_writer,sess.graph)
 
     
       
     # Start the queue runners.
     tf.train.start_queue_runners(sess=sess)
         
-    #summary_writer = tf.train.SummaryWriter(s_writer,sess.graph)
     
-    in_queue = []
-    prds = []
-    labs = []
-    lll = []
+    #prds = []
+    #labs = []
+    #lll = []
     error = [] 
     i = 0  
     with open(write_result, "w") as tr:
@@ -251,31 +249,6 @@ def run_training(scope=''):
             tr.write(str(error_mean)+'\n') 
             i = i+1
               
-    '''
-    ppr = np.reshape(np.vstack(prds).ravel(), (-1, 1))
-    plabs = np.reshape(np.vstack(labs).ravel(), (-1, 1))
-    pos_pr = sum(1 for no in ppr if no >0)
-    neg_pr = sum(1 for no in ppr if no<0)
-    pos_lab = sum(1 for no in plabs if no >0)
-    neg_lab = sum(1 for no in plabs if no<0)
-      
-    pppr = np.reshape(np.vstack(prds[int(len(prds)-d_size):len(prds)]).ravel(), (-1, 8))
-    pplabs = np.reshape(np.vstack(labs[int(len(labs)-d_size):len(labs)]).ravel(), (-1, 8))
-    with open(write_prds, "w") as aa:
-      for line in pppr:
-        aa.write(str(line)+'\n')
-      aa.write('\n')
-      aa.write('\n')
-      aa.write('positives= '+str(pos_pr)+'\n')
-      aa.write('negatives= '+str(neg_pr)+'\n')
-    with open(write_labs, "w") as bb:
-      for line in pplabs:
-          bb.write(str(line)+'\n')    
-      bb.write('\n')
-      bb.write('\n')
-      bb.write('positives= '+str(pos_lab)+'\n')
-      bb.write('negatives= '+str(neg_lab)+'\n')
-    '''
 
 
 
