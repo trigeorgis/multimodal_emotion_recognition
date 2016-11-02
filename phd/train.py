@@ -253,8 +253,7 @@ def run_training(scope=''):
             error_mean = float(sum(new_error)/len(new_error))
             tr.write(str(error_mean)+'\n') 
             i = i+1
-            summary_str = sess.run(summary_op)
-            summary_writer.add_summary(summary_str, epoch)  
+         
 
 
 
