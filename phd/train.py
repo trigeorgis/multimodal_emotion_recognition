@@ -203,13 +203,13 @@ def run_training(scope=''):
       
       # Build the summary operation from the last tower summaries.
       summary_op = tf.merge_summary(summaries)
+      summary_writer = tf.train.SummaryWriter(s_writer,sess.graph)
   
     
       
     # Start the queue runners.
     tf.train.start_queue_runners(sess=sess)
         
-    summary_writer = tf.train.SummaryWriter(s_writer,sess.graph)
     
 #    prds = []
 #    labs = []
