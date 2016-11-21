@@ -2,5 +2,5 @@ The audio/video training is happening in the audio.py and video.py files
 The modal network training is in the modal_network.py file
 
 Τσέκαρε τα αρχεία audio.py και video.py files
-Επίσης, πως κάνω save και load τα μοντέλα;
+Επίσης, πως κάνω save τα μοντέλα μετά το training και μετά load ώστε να κάνω train το modal δίκτυο;
 
