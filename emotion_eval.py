@@ -3,7 +3,9 @@ import data_provider
 import models
 import numpy as np
 import losses
+
 from menpo.visualize import print_progress
+from pathlib import Path
 
 slim = tf.contrib.slim
 
@@ -11,7 +13,7 @@ tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', '',
                           '''If specified, restore this pretrained model '''
                           '''before beginning any training.''')
 
-def evaluate():
+def evaluate(data_folder = Path('../')):
 
   g = tf.Graph()
   with g.as_default():
