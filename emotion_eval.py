@@ -21,7 +21,7 @@ def evaluate():
     
     # Define model graph.
     with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
-                           is_training=True):
+                           is_training=False):
       model = models.get_model(FLAGS.model)(data)
       prediction = models.get_prepared_model(FLAGS.model)(model, data)
 
