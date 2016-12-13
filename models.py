@@ -114,7 +114,7 @@ def get_model(name):
     if name in name_to_fun:
         features = name_to_fun[name]
     else:
-        ValueError('Requested name [{}] not a valid model'.format(name))
+        raise ValueError('Requested name [{}] not a valid model'.format(name))
 
     return recurrent_model(features)
 
