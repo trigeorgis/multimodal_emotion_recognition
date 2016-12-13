@@ -1,7 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import tensorflow as tf
 import data_provider
 import models
-import numpy as np
 import losses
 
 from menpo.visualize import print_progress
@@ -19,13 +22,12 @@ def evaluate(data_folder = Path('../')):
   with g.as_default():
     
     # Load dataset.
-    data, ground_truth = data_provider.get_split(data_folder, 'test', FLAGS.batch_size)
+    frames, audio, ground_truth = data_provider.get_split(data_folder, 'valid', FLAGS.batch_size)
     
     # Define model graph.
     with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
                            is_training=False):
-      model = models.get_model(FLAGS.model)(data)
-      prediction = models.get_prepared_model(FLAGS.model)(model, data)
+      prediction = models.get_model(FLAGS.model)(data)
 
     with tf.Session(graph=g) as sess:
       # Restore pretrained model variables from checkpoint
