@@ -51,12 +51,15 @@ def video_model(audio_frames=None, video_frames=None):
     return features
 
 
-def audio_model(audio_frames=None, video_frames=None, conv_filters=40):
+def audio_model(video_frames=None, audio_frames=None, conv_filters=40):
     """Complete me...
 
     Args:
     Returns:
     """
+
+    print(audio_frames.get_shape().as_list())
+
     batch_size, seq_length, num_features = audio_frames.get_shape().as_list()
     audio_input = tf.reshape(audio_frames, [batch_size * seq_length, 1, num_features, 1])
 
@@ -112,9 +115,12 @@ def get_model(name):
     name_to_fun = {'audio': audio_model, 'video': video_model, 'both': combined_model}
 
     if name in name_to_fun:
-        features = name_to_fun[name]
+        model = name_to_fun[name]
     else:
         raise ValueError('Requested name [{}] not a valid model'.format(name))
 
-    return recurrent_model(features)
+    def wrapper(*args, **kwargs):
+        return recurrent_model(model(*args, **kwargs))
+
+    return wrapper
 

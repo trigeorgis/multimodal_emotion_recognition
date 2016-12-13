@@ -8,7 +8,7 @@ from pathlib import Path
 
 slim = tf.contrib.slim
 
-def get_split(dataset_dir, split_name='train', batch_size=32, seq_length=1, debugging=False):
+def get_split(dataset_dir, split_name='train', batch_size=32, seq_length=150, debugging=False):
     """Returns a data split of the RECOLA dataset.
     
     Args:
@@ -17,7 +17,8 @@ def get_split(dataset_dir, split_name='train', batch_size=32, seq_length=1, debu
         The raw audio examples and the corresponding arousal/valence
         labels.
     """
-    paths = [str(x) for x in Path(dataset_dir).glob('*.tfrecords')]
+    root_path = Path(dataset_dir) / split_name
+    paths = [str(x) for x in root_path.glob('*.tfrecords')]
 
     is_training = split_name == 'train'
 
