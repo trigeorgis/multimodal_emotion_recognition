@@ -10,13 +10,21 @@ import losses
 from menpo.visualize import print_progress
 from pathlib import Path
 
+from tensorflow.python.platform import tf_logging as logging
+
 slim = tf.contrib.slim
 
+FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', '',
                           '''If specified, restore this pretrained model '''
                           '''before beginning any training.''')
+tf.app.flags.DEFINE_integer('batch_size', 32, '''The batch size to use.''')
+tf.app.flags.DEFINE_string('model', 'audio','''Which model is going to be used: audio,video, or both ''')
+tf.app.flags.DEFINE_string('dataset_dir', './tf_records/', 'The tfrecords directory.')
+tf.app.flags.DEFINE_string('checkpoint_dir', './ckpt/train/', 'The tfrecords directory.')
+tf.app.flags.DEFINE_string('log_dir', './ckpt/logs/valid/', 'The tfrecords directory.')
 
-def evaluate(data_folder = Path('../')):
+def evaluate(data_folder):
 
   g = tf.Graph()
   with g.as_default():
@@ -27,32 +35,37 @@ def evaluate(data_folder = Path('../')):
     # Define model graph.
     with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
                            is_training=False):
-      prediction = models.get_model(FLAGS.model)(data)
+      prediction = models.get_model(FLAGS.model)(frames, audio)
 
-    with tf.Session(graph=g) as sess:
-      # Restore pretrained model variables from checkpoint
-      variables_to_restore = slim.get_variables_to_restore()
-      restorer = tf.train.Saver(variables_to_restore)
-      restorer.restore(sess, FLAGS.pretrained_model_checkpoint_path)
+      names_to_values, names_to_updates = slim.metrics.aggregate_metric_map({"eval/mean_squared_error": slim.metrics.streaming_mean_squared_error(prediction, ground_truth)})
+      #metrics_to_values = slim.metrics.aggregate_metric_map({"eval/mean_squared_error": slim.metrics.streaming_mean_squared_error(prediction, ground_truth)})
+      # Create the summary ops such that they also print out to std output:
+      summary_ops = []
 
-      tf.train.start_queue_runners(sess=sess)
-
-      accuracy = losses.concordance_cc2(prediction, ground_truth)
+      op = tf.summary.scalar(names_to_values.keys()[0], names_to_updates.values()[0])
+      op = tf.Print(op, [names_to_updates.values()[0]], names_to_values.keys()[0])
+      summary_ops.append(op)
       
-      return sess.run(accuracy)
+      num_examples = 10000
+      num_batches = num_examples / (FLAGS.batch_size)
+      logging.set_verbosity(1)
+      
+      # Setup the global step.
+      slim.get_or_create_global_step()
+      eval_interval_secs = 30 # How often to run the evaluation.
+      slim.evaluation.evaluation_loop(
+          '',
+          FLAGS.checkpoint_dir,
+          FLAGS.log_dir,
+          num_evals=15,
+          eval_op=names_to_updates.values(),
+          summary_op=tf.summary.merge(summary_ops),
+          eval_interval_secs=eval_interval_secs)
 
-      '''
-      predictions = []
-      gts = []
 
-      for i in print_progress(range(5)):
-        p, gt = sess.run([prediction, ground_truth])
-        predictions.append(p)
-        gts.append(gt)
-      '''
 
 def main(_):
-    evaluate()
+    evaluate(FLAGS.dataset_dir)
 
 if __name__ == '__main__':
     tf.app.run()
