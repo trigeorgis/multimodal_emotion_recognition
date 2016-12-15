@@ -23,6 +23,8 @@ tf.app.flags.DEFINE_string('model', 'audio','''Which model is going to be used: 
 tf.app.flags.DEFINE_string('dataset_dir', './tf_records/', 'The tfrecords directory.')
 tf.app.flags.DEFINE_string('checkpoint_dir', './ckpt/train/', 'The tfrecords directory.')
 tf.app.flags.DEFINE_string('log_dir', './ckpt/logs/valid/', 'The tfrecords directory.')
+tf.app.flags.DEFINE_string('num_examples', 10000, 'The number of examples in the test set')
+tf.app.flags.DEFINE_string('eval_interval_secs', 300, 'The number of examples in the test set')
 
 def evaluate(data_folder):
 
@@ -30,7 +32,7 @@ def evaluate(data_folder):
   with g.as_default():
     
     # Load dataset.
-    frames, audio, ground_truth = data_provider.get_split(data_folder, 'valid', FLAGS.batch_size)
+    frames, audio, ground_truth = data_provider.get_split(data_folder, 'train', FLAGS.batch_size)
     
     # Define model graph.
     with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
@@ -45,19 +47,19 @@ def evaluate(data_folder):
       op = tf.summary.scalar(names_to_values.keys()[0], names_to_updates.values()[0])
       op = tf.Print(op, [names_to_updates.values()[0]], names_to_values.keys()[0])
       summary_ops.append(op)
-      
-      num_examples = 10000
+
+      num_examples = FLAGS.num_examples
       num_batches = num_examples / (FLAGS.batch_size)
       logging.set_verbosity(1)
       
       # Setup the global step.
       slim.get_or_create_global_step()
-      eval_interval_secs = 30 # How often to run the evaluation.
+      eval_interval_secs = FLAGS.eval_interval_secs # How often to run the evaluation.
       slim.evaluation.evaluation_loop(
           '',
           FLAGS.checkpoint_dir,
           FLAGS.log_dir,
-          num_evals=15,
+          num_evals=num_batches,
           eval_op=names_to_updates.values(),
           summary_op=tf.summary.merge(summary_ops),
           eval_interval_secs=eval_interval_secs)
