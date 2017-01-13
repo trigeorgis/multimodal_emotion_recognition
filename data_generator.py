@@ -105,14 +105,14 @@ def serialize_sample(writer, subject_id):
         del video, audio, label
 
 def main(directory):
-	for portion in portion_to_id.keys():
+  for portion in portion_to_id.keys():
     print(portion)
     
     for subj_id in print_progress(portion_to_id[portion]):
-        writer = tf.python_io.TFRecordWriter(
-            (directory / 'tf_records' / portion / '{}.tfrecords'.format(subj_id)
-            ).as_posix())
-        serialize_sample(writer, subj_id)
+      writer = tf.python_io.TFRecordWriter(
+          (directory / 'tf_records' / portion / '{}.tfrecords'.format(subj_id)
+          ).as_posix())
+      serialize_sample(writer, subj_id)
 
 if __name__ == "__main__":
-	main(Path('/vol/atlas/homes/pt511/db/RECOLA'))
+  main(Path('/vol/atlas/homes/pt511/db/RECOLA'))
