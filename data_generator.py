@@ -1,12 +1,14 @@
 import menpo
 import tensorflow as tf
 import numpy as np
+import menpo.io as mio
 
 from io import BytesIO
 from pathlib import Path
 from moviepy.editor import VideoFileClip
 from menpo.visualize import progress_bar_str, print_progress
 from menpo.image import Image
+from menpo.shape import PointCloud
 
 root_dir = Path('/vol/atlas/homes/gt108/db/RECOLA_CNN')
 
@@ -54,7 +56,7 @@ def get_samples(subject_id):
         time = 0.04 * i
         
         video = clip.get_frame(time)
-        audio = np.array(list(subsampled_audio.subclip(time - 0.04, time).iter_frames())).mean(1)
+        audio = np.array(list(subsampled_audio.subclip(time - 0.04, time).iter_frames())).mean(1)[:640]
         
         video_frames.append(video)
         audio_frames.append(audio.astype(np.float32))
@@ -87,8 +89,10 @@ def serialize_sample(writer, subject_id):
         
         try:
             lms =  mio.import_landmark_file(lms_path)
-        except:
-            pass
+        except Exception as e:
+            print('Landmark file [{}] could not be imported'.format(i))
+            print('Exception message : {}'.format(e))
+            continue
 
         frame.landmarks['PTS'] = lms
         frame = crop_face(frame)

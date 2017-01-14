@@ -35,7 +35,7 @@ def recurrent_model(net, hidden_units=128, number_of_outputs=2):
     return tf.reshape(prediction, (batch_size, seq_length, number_of_outputs))
 
 
-def video_model(audio_frames=None, video_frames=None):
+def video_model(video_frames=None, audio_frames=None):
     """Complete me...
 
     Args:
@@ -43,6 +43,7 @@ def video_model(audio_frames=None, video_frames=None):
     """
     batch_size, seq_length, height, width, channels = video_frames.get_shape().as_list()
     video_input = tf.reshape(video_frames, (batch_size * seq_length, height, width, channels))
+    video_input = tf.cast(video_input, tf.float32)
 
     features, _ = resnet_v1.resnet_v1_50(video_input, None)
 

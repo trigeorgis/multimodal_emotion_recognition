@@ -18,23 +18,25 @@ tf.app.flags.DEFINE_float('num_epochs_per_decay', 5.0, 'Epochs after which learn
 tf.app.flags.DEFINE_float('learning_rate_decay_factor', 0.97, 'Learning rate decay factor.')
 tf.app.flags.DEFINE_integer('batch_size', 15, '''The batch size to use.''')
 tf.app.flags.DEFINE_integer('num_preprocess_threads', 4, 'How many preprocess threads to use.')
-tf.app.flags.DEFINE_string('train_dir', 'ckpt/train',
+tf.app.flags.DEFINE_string('train_dir', 'ckpt/resnet_50',
                            '''Directory where to write event logs '''
                            '''and checkpoint.''')
-tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', '',
+tf.app.flags.DEFINE_string('pretrained_model_checkpoint_path', 
+			   'ckpt/pretrained_models/resnet_v1_50.ckpt',
                            '''If specified, restore this pretrained model '''
                            '''before beginning any training.''')
 tf.app.flags.DEFINE_integer('max_steps', 100000, 'Number of batches to run.')
 tf.app.flags.DEFINE_string('train_device', '/gpu:0', 'Device to train with.')
 tf.app.flags.DEFINE_string('model', 'audio',
                            '''Which model is going to be used: audio,video, or both ''')
-tf.app.flags.DEFINE_string('dataset_dir', 'data', 'The tfrecords directory.')
+tf.app.flags.DEFINE_string('dataset_dir', '/vol/atlas/homes/pt511/db/RECOLA/tf_records', 
+                           'The tfrecords directory.')
 
 def train(data_folder):
     g = tf.Graph()
     with g.as_default():
         # Load dataset.
-        frames, audio, ground_truth = data_provider.get_split(data_folder, 'train', FLAGS.batch_size)
+        frames, audio, ground_truth = data_provider.get_split(data_folder, 'valid', FLAGS.batch_size)
 
         # Define model graph.
         with slim.arg_scope([slim.batch_norm, slim.layers.dropout],
@@ -60,10 +62,13 @@ def train(data_folder):
 
         with tf.Session(graph=g) as sess:
             if FLAGS.pretrained_model_checkpoint_path:
-                variables_to_restore = slim.get_variables_to_restore()
-                saver = tf.train.Saver(variables_to_restore)
-                saver.restore(sess, FLAGS.pretrained_model_checkpoint_path)
-
+                variables_to_restore = slim.get_model_variables(scope='resnet_v1_50')
+                init_assign_op, init_feed_dict = slim.assign_from_checkpoint(
+                                        FLAGS.pretrained_model_checkpoint_path, variables_to_restore)
+                def InitAssignFn(sess):
+                  sess.run(init_assign_op, init_feed_dict)
+#                saver = tf.train.Saver(variables_to_restore)
+#                saver.restore(sess, FLAGS.pretrained_model_checkpoint_path)
             train_op = slim.learning.create_train_op(total_loss,
                                                      optimizer,
                                                      summarize_gradients=True)
@@ -71,6 +76,7 @@ def train(data_folder):
             logging.set_verbosity(1)
             slim.learning.train(train_op,
                                 FLAGS.train_dir,
+                                init_fn=InitAssignFn,
                                 save_summaries_secs=60,
                                 save_interval_secs=600)
 
