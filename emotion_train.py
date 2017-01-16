@@ -1,5 +1,5 @@
-from __future__ import absolute_import
 from __future__ import division
+from __future__ import absolute_import
 from __future__ import print_function
 
 import tensorflow as tf
@@ -62,14 +62,9 @@ def train(data_folder):
 
         with tf.Session(graph=g) as sess:
             if FLAGS.pretrained_model_checkpoint_path:
-#                variables_to_restore = slim.get_model_variables()
-#                init_assign_op, init_feed_dict = slim.assign_from_checkpoint_fn(
-#                                        FLAGS.pretrained_model_checkpoint_path, variables_to_restore)
-
-                # This is what you had.
-                variables_to_restore = slim.get_variables_to_restore()
-                saver = tf.train.Saver(variables_to_restore)
-                saver.restore(sess, FLAGS.pretrained_model_checkpoint_path)
+                variables_to_restore = slim.get_model_variables()
+                init_fn = slim.assign_from_checkpoint_fn(
+                            FLAGS.pretrained_model_checkpoint_path, variables_to_restore)
 
             train_op = slim.learning.create_train_op(total_loss,
                                                      optimizer,
@@ -77,7 +72,7 @@ def train(data_folder):
             logging.set_verbosity(1)
             slim.learning.train(train_op,
                                 FLAGS.train_dir,
-#                                init_fn=InitAssignFn,
+                                init_fn=init_fn,
                                 save_summaries_secs=60,
                                 save_interval_secs=600)
 
